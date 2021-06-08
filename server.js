@@ -14,11 +14,7 @@ app.get('/', (req, res) => {
 
 const io = require("socket.io")(http, {
     cors: {
-        origin: [
-            "http://localhost",
-            "http://192.168.1.25",
-            "https://webdgt.xyrus10.com"
-        ],
+        origin: '*',
         methods: ["GET", "POST"],
     }
 });
