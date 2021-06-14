@@ -53,4 +53,8 @@ io.on("connection", socket => {
         console.log("user leave", reason, clientList[socket.id])
         delete(clientList[socket.id])
     })
+
+    socket.on('teamChanged', param => {
+        socket.emit('reloadTeams', param)
+    })
 })
