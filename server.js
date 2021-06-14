@@ -54,7 +54,8 @@ io.on("connection", socket => {
         delete(clientList[socket.id])
     })
 
-    socket.on('teamChanged', param => {
-        socket.emit('reloadTeams', param)
+    socket.on('teamChanged', () => {
+        console.log("Team Changed", clientList[socket.id]);
+        socket.broadcast.emit('reloadTeams')
     })
 })
