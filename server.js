@@ -1,6 +1,7 @@
 var express = require('express')
 var app = express()
 var http = require('http').createServer(app);
+var request = require('request');
 
 http.listen(process.env.PORT || 6996, function () {
     var host = http.address().address
@@ -9,23 +10,42 @@ http.listen(process.env.PORT || 6996, function () {
 });
 
 app.get('/', (req, res) => {
-    res.send("")
+    res.sendFile(__dirname + "/index.html")
 })
 
 const io = require("socket.io")(http, {
     cors: {
-        origin: '*',
+        origin: "*",
         methods: ["GET", "POST"],
     }
 });
 
 var clientList = []
 
+function setUserStatus(userData, status) {
+    if (userData.userId == "anonim") return
+    var options = {
+        method: 'POST',
+        url: `${userData?.origin}/api/setuser/status`,
+        formData: {
+            token: userData?.token,
+            userId: userData?.userId,
+            status: status
+        }
+    };
+    request(options, function (error, response) {
+        if (error) throw new Error(error);
+        console.log(response.body);
+    });
+}
+
 io.on("connection", socket => {
 
-    socket.on('connected', username => {
+    socket.on('connected', userData => {
         console.log(`User Connected`)
-        clientList[socket.id] = {username: username, room:socket.rooms}
+        if (userData.userId != '') socket.broadcast.emit('tryLogoutUser', userData.userId)
+        clientList[socket.id] = {userData: userData, room:socket.rooms}
+        setUserStatus(userData, 1)
         console.log(clientList[socket.id])
     })
 
@@ -40,17 +60,18 @@ io.on("connection", socket => {
     })
 
     socket.on('joinRoom', room => {
-        console.log('Join Room', clientList[socket.id]);
         socket.join(room)
+        console.log('Join Room', clientList[socket.id]);
     })
 
     socket.on('leaveRoom', room => {
-        console.log('Leave Room', clientList[socket.id]);
         socket.leave(room)
+        console.log('Leave Room', clientList[socket.id]);
     })
 
     socket.on("disconnect", (reason) => {
         console.log("user leave", reason, clientList[socket.id])
+        setUserStatus(clientList[socket.id]?.userData, 0)
         delete(clientList[socket.id])
     })
 
@@ -58,4 +79,19 @@ io.on("connection", socket => {
         console.log("Team Changed", clientList[socket.id]);
         socket.broadcast.emit('reloadTeams')
     })
+
+    socket.on('productChanged', () => {
+        console.log("Product Changed", clientList[socket.id]);
+        socket.broadcast.emit('reloadProduct')
+    })
+
+    socket.on('changeArticle', idArticle => {
+        console.log("Article Changed", clientList[socket.id]);
+        socket.broadcast.emit('articleChanged', idArticle)
+    })
+
+    socket.on('sliderChange', value => {
+        socket.broadcast.emit('setSliderValue', value)
+    })
+
 })
