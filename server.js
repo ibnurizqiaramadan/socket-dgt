@@ -15,7 +15,8 @@ app.get('/', (req, res) => {
 
 const io = require("socket.io")(http, {
     cors: {
-        origin: ["http://192.168.1.69", "http://localhost", "https://dianglobaltech.co.id", "https://webdgt.xyrus10.com"],
+        // origin: ["http://192.168.1.69", "http://localhost", "https://dianglobaltech.co.id", "https://webdgt.xyrus10.com"],
+        origin: "*",
         methods: ["GET", "POST"],
     }
 });
@@ -23,7 +24,7 @@ const io = require("socket.io")(http, {
 var clientList = []
 
 function setUserStatus(userData, status) {
-    if (userData.userId == "anonim") return
+    if (userData.userId == "anonim" || userData.userId == "") return
     var options = {
         method: 'POST',
         url: `${userData?.origin}/api/setuser/status`,
